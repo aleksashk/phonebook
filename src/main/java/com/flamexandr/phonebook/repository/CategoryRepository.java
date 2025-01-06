@@ -61,7 +61,7 @@ public class CategoryRepository {
     }
 
     public List<Category> getAllCategories() throws SQLException {
-        String query = "SELECT FROM category";
+        String query = "SELECT * FROM category";
 
         System.out.println("Executing query: " + query);
 
