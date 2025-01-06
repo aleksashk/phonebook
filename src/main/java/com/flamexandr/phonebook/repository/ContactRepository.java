@@ -95,4 +95,14 @@ public class ContactRepository {
         }
         return contacts;
     }
+
+    public void deleteContact(int id) throws SQLException {
+        String query = "DELETE FROM contact WHERE id = ?";
+
+        try (Connection connection = DatabaseUtil.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setInt(1, id);
+            preparedStatement.executeUpdate();
+        }
+    }
 }
