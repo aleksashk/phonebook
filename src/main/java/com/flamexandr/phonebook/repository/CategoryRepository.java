@@ -90,6 +90,7 @@ public class CategoryRepository {
             preparedStatement.setString(1, category.getName());
             preparedStatement.setInt(2, category.getId());
             preparedStatement.executeUpdate();
+
         }
     }
 }
