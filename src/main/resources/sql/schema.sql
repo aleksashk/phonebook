@@ -1,28 +1,28 @@
-CREATE TABLE contact (
-                         id SERIAL PRIMARY KEY,
-                         last_name VARCHAR(255) NOT NULL DEFAULT '',
-                         first_name VARCHAR(255) NOT NULL DEFAULT ''
+CREATE TABLE IF NOT EXISTS contact (
+                                       id SERIAL PRIMARY KEY,
+                                       last_name VARCHAR(255) NOT NULL DEFAULT '',
+                                       first_name VARCHAR(255) NOT NULL DEFAULT ''
 );
 
-CREATE TABLE category (
-                          id SERIAL PRIMARY KEY,
-                          name VARCHAR(255) NOT NULL UNIQUE DEFAULT ''
+CREATE TABLE IF NOT EXISTS category (
+                                        id SERIAL PRIMARY KEY,
+                                        name VARCHAR(255) NOT NULL UNIQUE DEFAULT ''
 );
 
-CREATE TABLE phone_number_type (
-                                   id SERIAL PRIMARY KEY,
-                                   name VARCHAR(255) NOT NULL UNIQUE DEFAULT ''
+CREATE TABLE IF NOT EXISTS phone_number_type (
+                                                 id SERIAL PRIMARY KEY,
+                                                 name VARCHAR(255) NOT NULL UNIQUE DEFAULT ''
 );
 
-CREATE TABLE phone_number (
-                              id SERIAL PRIMARY KEY,
-                              contact_id INT NOT NULL REFERENCES contact(id),
-                              phone_number VARCHAR(15) NOT NULL UNIQUE DEFAULT '',
-                              type_id INT NOT NULL REFERENCES phone_number_type(id)
+CREATE TABLE IF NOT EXISTS phone_number (
+                                            id SERIAL PRIMARY KEY,
+                                            contact_id INT NOT NULL REFERENCES contact(id) ON DELETE CASCADE,
+                                            phone_number VARCHAR(15) NOT NULL UNIQUE DEFAULT '',
+                                            type_id INT NOT NULL REFERENCES phone_number_type(id)
 );
 
 CREATE TABLE contact_category (
-                                  contact_id INT NOT NULL REFERENCES contact(id),
+                                  contact_id INT NOT NULL REFERENCES contact(id) ON DELETE CASCADE,
                                   category_id INT NOT NULL REFERENCES category(id),
                                   PRIMARY KEY (contact_id, category_id)
 );

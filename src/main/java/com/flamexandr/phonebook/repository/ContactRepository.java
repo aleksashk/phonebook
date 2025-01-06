@@ -9,12 +9,11 @@ import java.util.List;
 
 public class ContactRepository {
 
-
     public List<Contact> getAllContacts() throws SQLException {
+        String query = "SELECT * FROM contact";
+        System.out.println("Executing query: " + query);
 
         List<Contact> contacts = new ArrayList<>();
-        String query = "SELECT * FROM contact";
-
         try (Connection connection = DatabaseUtil.getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(query)) {
@@ -31,23 +30,31 @@ public class ContactRepository {
     }
 
     public void addContact(Contact contact) throws SQLException {
-
         String query = "INSERT INTO contact (last_name, first_name) VALUES (?, ?)";
+        System.out.println("Executing query: " + query);
+
         try (Connection connection = DatabaseUtil.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+
             preparedStatement.setString(1, contact.getLastName());
             preparedStatement.setString(2, contact.getFirstName());
-
             preparedStatement.executeUpdate();
+
+            try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    contact.setId(generatedKeys.getInt(1));
+                }
+            }
         }
     }
 
     public Contact getContactById(int id) throws SQLException {
-
         String query = "SELECT * FROM contact WHERE id = ?";
+        System.out.println("Executing query: " + query);
 
         try (Connection connection = DatabaseUtil.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
             preparedStatement.setInt(1, id);
             ResultSet resultSet = preparedStatement.executeQuery();
 
@@ -64,6 +71,7 @@ public class ContactRepository {
 
     public boolean existsById(int id) throws SQLException {
         String query = "SELECT 1 FROM contact WHERE id = ?";
+        System.out.println("Executing query: " + query);
 
         try (Connection connection = DatabaseUtil.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -76,12 +84,11 @@ public class ContactRepository {
     }
 
     public List<Contact> getContactsByFirstName(String firstName) throws SQLException {
-        List<Contact> contacts = new ArrayList<>();
         String query = "SELECT * FROM contact WHERE first_name = ?";
+        System.out.println("Executing query: " + query);
 
+        List<Contact> contacts = new ArrayList<>();
         try (Connection connection = DatabaseUtil.getConnection();
-
-
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setString(1, firstName);
@@ -99,12 +106,11 @@ public class ContactRepository {
     }
 
     public List<Contact> getContactsByLastName(String lastName) throws SQLException {
-        List<Contact> contacts = new ArrayList<>();
         String query = "SELECT * FROM contact WHERE last_name = ?";
+        System.out.println("Executing query: " + query);
 
+        List<Contact> contacts = new ArrayList<>();
         try (Connection connection = DatabaseUtil.getConnection();
-
-
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setString(1, lastName);
@@ -123,6 +129,7 @@ public class ContactRepository {
 
     public void updateContact(Contact contact) throws SQLException {
         String query = "UPDATE contact SET last_name = ?, first_name = ? WHERE id = ?";
+        System.out.println("Executing query: " + query);
 
         try (Connection connection = DatabaseUtil.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -130,13 +137,13 @@ public class ContactRepository {
             preparedStatement.setString(1, contact.getLastName());
             preparedStatement.setString(2, contact.getFirstName());
             preparedStatement.setInt(3, contact.getId());
-
             preparedStatement.executeUpdate();
         }
     }
 
     public void deleteContact(int id) throws SQLException {
         String query = "DELETE FROM contact WHERE id = ?";
+        System.out.println("Executing query: " + query);
 
         try (Connection connection = DatabaseUtil.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -145,6 +152,4 @@ public class ContactRepository {
             preparedStatement.executeUpdate();
         }
     }
-
-
 }
