@@ -98,4 +98,15 @@ public class PhoneNumberRepository {
             preparedStatement.executeUpdate();
         }
     }
+
+    public void deleteAllPhoneNumbers() throws SQLException {
+        String query = "DELETE FROM phone_number";
+        System.out.println("Executing query: " + query);
+
+        try (Connection connection = DatabaseUtil.getConnection();
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate(query);
+        }
+    }
+
 }
