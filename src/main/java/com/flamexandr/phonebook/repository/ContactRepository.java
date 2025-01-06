@@ -80,9 +80,34 @@ public class ContactRepository {
         String query = "SELECT * FROM contact WHERE first_name = ?";
 
         try (Connection connection = DatabaseUtil.getConnection();
+
+
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setString(1, firstName);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                contacts.add(new Contact(
+                        resultSet.getInt("id"),
+                        resultSet.getString("last_name"),
+                        resultSet.getString("first_name")
+                ));
+            }
+        }
+        return contacts;
+    }
+
+    public List<Contact> getContactsByLastName(String lastName) throws SQLException {
+        List<Contact> contacts = new ArrayList<>();
+        String query = "SELECT * FROM contact WHERE last_name = ?";
+
+        try (Connection connection = DatabaseUtil.getConnection();
+
+
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setString(1, lastName);
             ResultSet resultSet = preparedStatement.executeQuery();
 
             while (resultSet.next()) {
