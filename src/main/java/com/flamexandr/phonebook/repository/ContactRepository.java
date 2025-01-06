@@ -120,4 +120,31 @@ public class ContactRepository {
         }
         return contacts;
     }
+
+    public void updateContact(Contact contact) throws SQLException {
+        String query = "UPDATE contact SET last_name = ?, first_name = ? WHERE id = ?";
+
+        try (Connection connection = DatabaseUtil.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setString(1, contact.getLastName());
+            preparedStatement.setString(2, contact.getFirstName());
+            preparedStatement.setInt(3, contact.getId());
+
+            preparedStatement.executeUpdate();
+        }
+    }
+
+    public void deleteContact(int id) throws SQLException {
+        String query = "DELETE FROM contact WHERE id = ?";
+
+        try (Connection connection = DatabaseUtil.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, id);
+            preparedStatement.executeUpdate();
+        }
+    }
+
+
 }
