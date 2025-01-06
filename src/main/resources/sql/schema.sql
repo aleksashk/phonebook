@@ -1,0 +1,40 @@
+CREATE TABLE contact (
+                         id SERIAL PRIMARY KEY,
+                         last_name VARCHAR(255) NOT NULL DEFAULT '',
+                         first_name VARCHAR(255) NOT NULL DEFAULT ''
+);
+
+CREATE TABLE category (
+                          id SERIAL PRIMARY KEY,
+                          name VARCHAR(255) NOT NULL UNIQUE DEFAULT ''
+);
+
+CREATE TABLE phone_number_type (
+                                   id SERIAL PRIMARY KEY,
+                                   name VARCHAR(255) NOT NULL UNIQUE DEFAULT ''
+);
+
+CREATE TABLE phone_number (
+                              id SERIAL PRIMARY KEY,
+                              contact_id INT NOT NULL REFERENCES contact(id),
+                              phone_number VARCHAR(15) NOT NULL UNIQUE DEFAULT '',
+                              type_id INT NOT NULL REFERENCES phone_number_type(id)
+);
+
+CREATE TABLE contact_category (
+                                  contact_id INT NOT NULL REFERENCES contact(id),
+                                  category_id INT NOT NULL REFERENCES category(id),
+                                  PRIMARY KEY (contact_id, category_id)
+);
+
+
+INSERT INTO phone_number_type (name) VALUES ('Личный'), ('Рабочий'), ('Домашний');
+
+INSERT INTO contact (first_name, last_name) VALUES ('Павел', 'Титов'), ('Анастасия', 'Иванова');
+
+INSERT INTO category (name) VALUES ('Друзья'), ('Одноклассники'), ('Родственники');
+
+INSERT INTO phone_number (contact_id, phone_number, type_id)
+VALUES (1, '46237648234', 1), (2, '324234234234', 2);
+
+INSERT INTO contact_category (contact_id, category_id) VALUES (1, 1), (2, 2);
