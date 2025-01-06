@@ -4,15 +4,26 @@ import java.util.Objects;
 
 public class ContactCategory {
 
+    private int id;
     private int contactId;
     private int categoryId;
 
     public ContactCategory() {
     }
 
-    public ContactCategory(int contactId, int categoryId) {
+
+    public ContactCategory(int id, int contactId, int categoryId) {
+        this.id = id;
         this.contactId = contactId;
         this.categoryId = categoryId;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public int getContactId() {
@@ -36,18 +47,19 @@ public class ContactCategory {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ContactCategory that = (ContactCategory) o;
-        return contactId == that.contactId && categoryId == that.categoryId;
+        return id == that.id && contactId == that.contactId && categoryId == that.categoryId;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(contactId, categoryId);
+        return Objects.hash(id, contactId, categoryId);
     }
 
     @Override
     public String toString() {
         return "ContactCategory{" +
-                "contactId=" + contactId +
+                "id=" + id +
+                ", contactId=" + contactId +
                 ", categoryId=" + categoryId +
                 '}';
     }
