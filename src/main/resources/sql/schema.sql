@@ -1,3 +1,8 @@
+DROP TABLE IF EXISTS phone_number CASCADE;
+DROP TABLE IF EXISTS contact CASCADE;
+DROP TABLE IF EXISTS phone_number_type CASCADE;
+
+
 CREATE TABLE IF NOT EXISTS contact (
                                        id SERIAL PRIMARY KEY,
                                        last_name VARCHAR(255) NOT NULL DEFAULT '',
@@ -15,9 +20,9 @@ CREATE TABLE IF NOT EXISTS phone_number_type (
 );
 
 CREATE TABLE IF NOT EXISTS phone_number (
-                                            id SERIAL PRIMARY KEY,
+                                            id SERIAL PRIMARY KEY, -- SERIAL автоматически создаёт последовательность и привязывает её к столбцу
                                             contact_id INT NOT NULL REFERENCES contact(id) ON DELETE CASCADE,
-                                            phone_number VARCHAR(15) NOT NULL UNIQUE DEFAULT '',
+                                            phone_number VARCHAR(15) NOT NULL UNIQUE,
                                             type_id INT NOT NULL REFERENCES phone_number_type(id)
 );
 

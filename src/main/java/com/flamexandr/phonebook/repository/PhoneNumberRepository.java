@@ -19,11 +19,17 @@ public class PhoneNumberRepository {
             preparedStatement.setString(2, phoneNumber.getPhoneNumber());
             preparedStatement.setInt(3, phoneNumber.getTypeId());
 
-            preparedStatement.executeUpdate();
+            int affectedRows = preparedStatement.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Creating phone number failed, no rows affected.");
+            }
 
             try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     phoneNumber.setId(generatedKeys.getInt(1));
+                    System.out.println("Inserted PhoneNumber with ID: " + phoneNumber.getId());
+                } else {
+                    throw new SQLException("Creating phone number failed, no ID obtained.");
                 }
             }
         }
@@ -108,5 +114,4 @@ public class PhoneNumberRepository {
             statement.executeUpdate(query);
         }
     }
-
 }

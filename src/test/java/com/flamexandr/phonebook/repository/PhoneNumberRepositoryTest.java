@@ -1,9 +1,12 @@
 package com.flamexandr.phonebook.repository;
 
 import com.flamexandr.phonebook.model.PhoneNumber;
+import com.flamexandr.phonebook.util.DatabaseUtil;
 import org.junit.jupiter.api.*;
 
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,38 +20,60 @@ public class PhoneNumberRepositoryTest {
     public void setUp() throws SQLException {
         phoneNumberRepository = new PhoneNumberRepository();
 
-        // Очистка таблицы перед тестами
-        phoneNumberRepository.deleteAllPhoneNumbers();
+        try (Connection connection = DatabaseUtil.getConnection();
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("DELETE FROM phone_number");
+            statement.executeUpdate("DELETE FROM contact");
+            statement.executeUpdate("DELETE FROM phone_number_type");
 
-        // Добавление тестовых данных
-        phoneNumberRepository.addPhoneNumber(new PhoneNumber(0, 1, "1234567890", 1));
-        phoneNumberRepository.addPhoneNumber(new PhoneNumber(0, 2, "0987654321", 2));
+            // Insert test data
+            statement.executeUpdate("INSERT INTO contact (id, first_name, last_name) VALUES " +
+                    "(1, 'Иван', 'Иванов'), (2, 'Мария', 'Петрова')");
+            statement.executeUpdate("INSERT INTO phone_number_type (id, name) VALUES " +
+                    "(1, 'Личный'), (2, 'Рабочий')");
+        }
+    }
+
+    @BeforeEach
+    public void resetPhoneNumbers() throws SQLException {
+        try (Connection connection = DatabaseUtil.getConnection();
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("DELETE FROM phone_number");
+            statement.executeUpdate("ALTER SEQUENCE phone_number_id_seq RESTART WITH 1");
+
+            phoneNumberRepository.addPhoneNumber(new PhoneNumber(0, 1, "1234567891", 1));
+            phoneNumberRepository.addPhoneNumber(new PhoneNumber(0, 2, "0987654322", 2));
+        }
     }
 
     @Test
     public void testAddPhoneNumber() throws SQLException {
-        PhoneNumber phoneNumber = new PhoneNumber(0, 3, "111222333", 1);
+        try (Connection connection = DatabaseUtil.getConnection();
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate("INSERT INTO contact (id, first_name, last_name) VALUES (3, 'Сергей', 'Сергеев')");
+        }
+
+        PhoneNumber phoneNumber = new PhoneNumber(0, 3, "333444555", 1);
         phoneNumberRepository.addPhoneNumber(phoneNumber);
 
         assertNotEquals(0, phoneNumber.getId());
-
         PhoneNumber retrieved = phoneNumberRepository.getPhoneNumber(phoneNumber.getId());
         assertNotNull(retrieved);
-        assertEquals("111222333", retrieved.getPhoneNumber());
+        assertEquals("333444555", retrieved.getPhoneNumber());
     }
 
     @Test
     public void testGetPhoneNumber() throws SQLException {
         PhoneNumber phoneNumber = phoneNumberRepository.getPhoneNumber(1);
         assertNotNull(phoneNumber);
-        assertEquals("1234567890", phoneNumber.getPhoneNumber());
+        assertEquals("1234567891", phoneNumber.getPhoneNumber());
     }
 
     @Test
     public void testGetAllPhoneNumbers() throws SQLException {
         List<PhoneNumber> phoneNumbers = phoneNumberRepository.getAllPhoneNumbers();
         assertNotNull(phoneNumbers);
-        assertTrue(phoneNumbers.size() >= 2);
+        assertEquals(2, phoneNumbers.size());
     }
 
     @Test
@@ -65,7 +90,7 @@ public class PhoneNumberRepositoryTest {
 
     @Test
     public void testDeletePhoneNumber() throws SQLException {
-        PhoneNumber phoneNumber = new PhoneNumber(0, 4, "555666777", 2);
+        PhoneNumber phoneNumber = new PhoneNumber(0, 1, "555666777", 2);
         phoneNumberRepository.addPhoneNumber(phoneNumber);
 
         int id = phoneNumber.getId();
@@ -77,14 +102,10 @@ public class PhoneNumberRepositoryTest {
 
     @Test
     public void testDeleteAllPhoneNumbers() throws SQLException {
-        phoneNumberRepository.addPhoneNumber(new PhoneNumber(0, 1, "1234567890", 1));
-        phoneNumberRepository.addPhoneNumber(new PhoneNumber(0, 2, "0987654321", 2));
-
         phoneNumberRepository.deleteAllPhoneNumbers();
-        List<PhoneNumber> allPhoneNumbers = phoneNumberRepository.getAllPhoneNumbers();
-        Assertions.assertTrue(allPhoneNumbers.isEmpty());
+        List<PhoneNumber> phoneNumbers = phoneNumberRepository.getAllPhoneNumbers();
+        assertTrue(phoneNumbers.isEmpty());
     }
-
 
     @AfterAll
     public void tearDown() throws SQLException {
