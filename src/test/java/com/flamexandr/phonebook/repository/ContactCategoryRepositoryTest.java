@@ -22,42 +22,41 @@ class ContactCategoryRepositoryTest {
         try (Connection connection = DatabaseUtil.getConnection();
              Statement statement = connection.createStatement()) {
 
-            // Создайте таблицы, если их нет
+            // Исправленная структура таблиц
             statement.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                email VARCHAR(255) NOT NULL UNIQUE,
-                password VARCHAR(255) NOT NULL
-            );
-            CREATE TABLE IF NOT EXISTS contact (
-                id SERIAL PRIMARY KEY,
-                last_name VARCHAR(255) NOT NULL DEFAULT '',
-                first_name VARCHAR(255) NOT NULL DEFAULT '',
-                user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE
-            );
-            CREATE TABLE IF NOT EXISTS category (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(255) NOT NULL UNIQUE
-            );
-            CREATE TABLE IF NOT EXISTS contact_category (
-                id SERIAL PRIMARY KEY,
-                contact_id INT NOT NULL REFERENCES contact(id) ON DELETE CASCADE,
-                category_id INT NOT NULL REFERENCES category(id)
-            );
-        """);
+                CREATE TABLE IF NOT EXISTS users (
+                    email VARCHAR(255) PRIMARY KEY,
+                    password VARCHAR(255) NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS contact (
+                    id SERIAL PRIMARY KEY,
+                    last_name VARCHAR(255) NOT NULL DEFAULT '',
+                    first_name VARCHAR(255) NOT NULL DEFAULT '',
+                    user_email VARCHAR(255) NOT NULL REFERENCES users(email) ON DELETE CASCADE
+                );
+                CREATE TABLE IF NOT EXISTS category (
+                    id SERIAL PRIMARY KEY,
+                    name VARCHAR(255) NOT NULL UNIQUE
+                );
+                CREATE TABLE IF NOT EXISTS contact_category (
+                    id SERIAL PRIMARY KEY,
+                    contact_id INT NOT NULL REFERENCES contact(id) ON DELETE CASCADE,
+                    category_id INT NOT NULL REFERENCES category(id)
+                );
+            """);
 
-            // Очистите и заполните таблицы тестовыми данными
+            // Очистка и наполнение таблиц тестовыми данными
             statement.execute("TRUNCATE TABLE contact_category, contact, category, users RESTART IDENTITY CASCADE;");
             statement.execute("INSERT INTO users (email, password) VALUES ('user1@example.com', 'password1');");
 
-            // Добавляем контакты с корректным user_id
-            statement.execute("INSERT INTO contact (last_name, first_name, user_id) VALUES ('Иванов', 'Иван', 1);");
-            statement.execute("INSERT INTO contact (last_name, first_name, user_id) VALUES ('Петров', 'Петр', 1);");
+            // Добавление контактов с корректным user_email
+            statement.execute("INSERT INTO contact (last_name, first_name, user_email) VALUES ('Иванов', 'Иван', 'user1@example.com');");
+            statement.execute("INSERT INTO contact (last_name, first_name, user_email) VALUES ('Петров', 'Петр', 'user1@example.com');");
 
-            // Добавляем категории
+            // Добавление категорий
             statement.execute("INSERT INTO category (name) VALUES ('Друзья'), ('Работа');");
 
-            // Добавляем связь между контактами и категориями
+            // Добавление связи между контактами и категориями
             statement.execute("INSERT INTO contact_category (contact_id, category_id) VALUES (1, 1), (2, 2);");
         }
     }

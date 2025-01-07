@@ -1,17 +1,16 @@
 package com.flamexandr.phonebook.model;
 
 public class Contact {
-
     private int id;
     private String lastName;
     private String firstName;
-    private int userId;
+    private String userEmail; // Используем email вместо userId
 
-    public Contact(int id, String lastName, String firstName, int userId) {
+    public Contact(int id, String lastName, String firstName, String userEmail) {
         this.id = id;
         this.lastName = lastName;
         this.firstName = firstName;
-        this.userId = userId;
+        this.userEmail = userEmail;
     }
 
     public int getId() {
@@ -38,11 +37,11 @@ public class Contact {
         this.firstName = firstName;
     }
 
-    public int getUserId() {
-        return userId;
+    public String getUserEmail() {
+        return userEmail;
     }
 
-    public void setUserId(int userId) {
-        this.userId = userId;
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 }

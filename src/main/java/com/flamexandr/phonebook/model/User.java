@@ -8,7 +8,7 @@ public class User {
 
     public User(String email, String password) {
         this.email = email;
-        this.password = password;
+        this.password = DigestUtils.md5Hex(password);
     }
 
     public String getEmail() {
@@ -19,12 +19,7 @@ public class User {
         return password;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public boolean checkPassword(String rawPassword) {
-        // Здесь мы хэшируем введенный пароль и сравниваем с хэшированным из БД
-        return DigestUtils.md5Hex(rawPassword).equals(password);
+    public boolean checkPassword(String plainPassword) {
+        return DigestUtils.md5Hex(plainPassword).equals(this.password);
     }
 }
