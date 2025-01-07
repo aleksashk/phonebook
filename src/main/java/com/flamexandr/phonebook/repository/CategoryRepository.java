@@ -14,7 +14,7 @@ public class CategoryRepository {
         System.out.println("Executing query: " + query);
 
         try (Connection connection = DatabaseUtil.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) { // Добавлено Statement.RETURN_GENERATED_KEYS
 
             preparedStatement.setString(1, category.getName());
             preparedStatement.executeUpdate();

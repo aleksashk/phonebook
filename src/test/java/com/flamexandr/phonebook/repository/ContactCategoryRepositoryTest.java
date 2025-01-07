@@ -22,15 +22,42 @@ class ContactCategoryRepositoryTest {
         try (Connection connection = DatabaseUtil.getConnection();
              Statement statement = connection.createStatement()) {
 
-            // Создайте необходимые таблицы, если их нет
-            statement.execute("CREATE TABLE IF NOT EXISTS contact (id SERIAL PRIMARY KEY, last_name VARCHAR(255), first_name VARCHAR(255));");
-            statement.execute("CREATE TABLE IF NOT EXISTS category (id SERIAL PRIMARY KEY, name VARCHAR(255));");
-            statement.execute("CREATE TABLE IF NOT EXISTS contact_category (id SERIAL PRIMARY KEY, contact_id INT NOT NULL REFERENCES contact(id), category_id INT NOT NULL REFERENCES category(id));");
+            // Создайте таблицы, если их нет
+            statement.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                email VARCHAR(255) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS contact (
+                id SERIAL PRIMARY KEY,
+                last_name VARCHAR(255) NOT NULL DEFAULT '',
+                first_name VARCHAR(255) NOT NULL DEFAULT '',
+                user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE
+            );
+            CREATE TABLE IF NOT EXISTS category (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL UNIQUE
+            );
+            CREATE TABLE IF NOT EXISTS contact_category (
+                id SERIAL PRIMARY KEY,
+                contact_id INT NOT NULL REFERENCES contact(id) ON DELETE CASCADE,
+                category_id INT NOT NULL REFERENCES category(id)
+            );
+        """);
 
             // Очистите и заполните таблицы тестовыми данными
-            statement.execute("TRUNCATE TABLE contact_category, contact, category RESTART IDENTITY CASCADE;");
-            statement.execute("INSERT INTO contact (last_name, first_name) VALUES ('Иванов', 'Иван'), ('Петров', 'Петр');");
+            statement.execute("TRUNCATE TABLE contact_category, contact, category, users RESTART IDENTITY CASCADE;");
+            statement.execute("INSERT INTO users (email, password) VALUES ('user1@example.com', 'password1');");
+
+            // Добавляем контакты с корректным user_id
+            statement.execute("INSERT INTO contact (last_name, first_name, user_id) VALUES ('Иванов', 'Иван', 1);");
+            statement.execute("INSERT INTO contact (last_name, first_name, user_id) VALUES ('Петров', 'Петр', 1);");
+
+            // Добавляем категории
             statement.execute("INSERT INTO category (name) VALUES ('Друзья'), ('Работа');");
+
+            // Добавляем связь между контактами и категориями
             statement.execute("INSERT INTO contact_category (contact_id, category_id) VALUES (1, 1), (2, 2);");
         }
     }
