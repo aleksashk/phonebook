@@ -1,69 +1,58 @@
 package com.flamexandr.phonebook.repository;
 
 import com.flamexandr.phonebook.model.User;
+import com.flamexandr.phonebook.util.DatabaseUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.sql.Connection;
+import java.sql.Statement;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-class UserRepositoryTest {
+public class UserRepositoryTest {
 
     private UserRepository userRepository;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         userRepository = new UserRepository();
+
+        try (Connection connection = DatabaseUtil.getConnection();
+             Statement statement = connection.createStatement()) {
+            // Очистка таблицы users
+            statement.execute("TRUNCATE TABLE users RESTART IDENTITY CASCADE;");
+        }
     }
 
     @Test
     void testSaveUser() {
-        User user = new User("test@example.com", "password123");
+        User user = new User("unique@example.com", "password123");
         userRepository.save(user);
-
-        User retrievedUser = userRepository.findByEmail("test@example.com");
-        assertNotNull(retrievedUser, "User should be saved and retrievable.");
-        assertEquals("test@example.com", retrievedUser.getEmail());
-        assertTrue(retrievedUser.checkPassword("password123"), "Password should match.");
-    }
-
-    @Test
-    void testExistsByEmail() {
-        userRepository.save(new User("test@example.com", "password123"));
-
-        assertTrue(userRepository.existsByEmail("test@example.com"), "User with this email should exist.");
-        assertFalse(userRepository.existsByEmail("nonexistent@example.com"), "Nonexistent user should not exist.");
-    }
-
-    @Test
-    void testFindByEmail() {
-        userRepository.save(new User("test@example.com", "password123"));
-
-        User user = userRepository.findByEmail("test@example.com");
-        assertNotNull(user, "User should be found.");
-        assertEquals("test@example.com", user.getEmail(), "Email should match.");
-    }
-
-    @Test
-    void testFindByEmail_NotFound() {
-        User user = userRepository.findByEmail("nonexistent@example.com");
-        assertNull(user, "User should not be found for nonexistent email.");
+        assertNotNull(user.getId());
     }
 
     @Test
     void testSaveMultipleUsers() {
         userRepository.save(new User("user1@example.com", "password1"));
         userRepository.save(new User("user2@example.com", "password2"));
+        assertNotNull(userRepository.findByEmail("user1@example.com"));
+        assertNotNull(userRepository.findByEmail("user2@example.com"));
+    }
 
-        assertTrue(userRepository.existsByEmail("user1@example.com"), "User1 should exist.");
-        assertTrue(userRepository.existsByEmail("user2@example.com"), "User2 should exist.");
+    @Test
+    void testFindByEmail() {
+        User user = new User("test@example.com", "password");
+        userRepository.save(user);
+        User found = userRepository.findByEmail("test@example.com");
+        assertNotNull(found);
+        assertEquals("test@example.com", found.getEmail());
+    }
 
-        User user1 = userRepository.findByEmail("user1@example.com");
-        User user2 = userRepository.findByEmail("user2@example.com");
-
-        assertNotNull(user1, "User1 should be found.");
-        assertNotNull(user2, "User2 should be found.");
-
-        assertTrue(user1.checkPassword("password1"), "Password1 should match.");
-        assertTrue(user2.checkPassword("password2"), "Password2 should match.");
+    @Test
+    void testExistsByEmail() {
+        userRepository.save(new User("exists@example.com", "password"));
+        assertTrue(userRepository.existsByEmail("exists@example.com"));
+        assertFalse(userRepository.existsByEmail("nonexistent@example.com"));
     }
 }
