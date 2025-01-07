@@ -4,6 +4,7 @@ import com.flamexandr.phonebook.model.Contact;
 import com.flamexandr.phonebook.model.User;
 import com.flamexandr.phonebook.repository.ContactRepository;
 import com.flamexandr.phonebook.repository.UserRepository;
+import com.flamexandr.phonebook.util.DatabaseUtil;
 import com.flamexandr.phonebook.util.SchemaInitializer;
 
 import java.util.List;
@@ -11,6 +12,10 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
+        // Тестирование подключения к базе данных
+        DatabaseUtil.testConnection();
+
+        // Инициализация схемы базы данных
         SchemaInitializer.executeSchema();
 
         UserRepository userRepository = new UserRepository();
