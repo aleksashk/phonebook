@@ -15,105 +15,84 @@ import static org.junit.jupiter.api.Assertions.*;
 public class PhoneNumberTypeRepositoryTest {
 
     private PhoneNumberTypeRepository phoneNumberTypeRepository;
-
-    @BeforeAll
-    public void setUp() throws SQLException {
-        phoneNumberTypeRepository = new PhoneNumberTypeRepository();
-    }
-
-    private void logCurrentState() throws SQLException {
-        List<PhoneNumberType> types = phoneNumberTypeRepository.getAllPhoneNumberTypes();
-        System.out.println("Текущие данные в phone_number_type:");
-        types.forEach(type -> System.out.println("ID: " + type.getId() + ", Name: " + type.getName()));
-    }
+    private PhoneNumberRepository phoneNumberRepository;
 
     @BeforeEach
-    public void prepareTestData() throws SQLException {
-        phoneNumberTypeRepository.deleteAllPhoneNumberTypes();
+    void setUp() throws Exception {
+        phoneNumberTypeRepository = new PhoneNumberTypeRepository();
+        phoneNumberRepository = new PhoneNumberRepository();
 
         try (Connection connection = DatabaseUtil.getConnection();
              Statement statement = connection.createStatement()) {
-            statement.executeUpdate("ALTER SEQUENCE phone_number_type_id_seq RESTART WITH 1");
+
+            // Очистка таблиц
+            statement.execute("TRUNCATE TABLE phone_number RESTART IDENTITY CASCADE;");
+            statement.execute("TRUNCATE TABLE phone_number_type RESTART IDENTITY CASCADE;");
+
+            // Добавление тестовых данных
+            statement.execute("INSERT INTO phone_number_type (name) VALUES ('Личный'), ('Рабочий'), ('Домашний');");
+            statement.execute("INSERT INTO phone_number (contact_id, phone_number, type_id) VALUES (1, '1234567890', 1);");
         }
-
-        phoneNumberTypeRepository.addPhoneNumberType(new PhoneNumberType(0, "Личный"));
-        phoneNumberTypeRepository.addPhoneNumberType(new PhoneNumberType(0, "Рабочий"));
-
-        logCurrentState();
     }
 
     @Test
     public void testAddPhoneNumberType() throws SQLException {
-        PhoneNumberType type = new PhoneNumberType(0, "Домашний");
+        PhoneNumberType type = new PhoneNumberType(0, "Мобильный");
         phoneNumberTypeRepository.addPhoneNumberType(type);
 
-        assertNotEquals(0, type.getId());
+        assertNotEquals(0, type.getId(), "ID должен быть сгенерирован");
         PhoneNumberType retrieved = phoneNumberTypeRepository.getPhoneNumberType(type.getId());
-        assertNotNull(retrieved);
-        assertEquals("Домашний", retrieved.getName());
+        assertNotNull(retrieved, "Добавленный тип должен быть найден");
+        assertEquals("Мобильный", retrieved.getName());
     }
 
     @Test
     public void testGetPhoneNumberType() throws SQLException {
-        List<PhoneNumberType> types = phoneNumberTypeRepository.getAllPhoneNumberTypes();
-        PhoneNumberType type = types.stream()
-                .filter(t -> "Личный".equals(t.getName()))
-                .findFirst()
-                .orElse(null);
-
-        assertNotNull(type, "PhoneNumberType с именем 'Личный' должен существовать");
+        PhoneNumberType type = phoneNumberTypeRepository.getPhoneNumberType(1);
+        assertNotNull(type, "Тип телефонного номера с ID 1 должен существовать");
         assertEquals("Личный", type.getName());
     }
 
     @Test
     public void testGetAllPhoneNumberTypes() throws SQLException {
         List<PhoneNumberType> types = phoneNumberTypeRepository.getAllPhoneNumberTypes();
-        assertNotNull(types);
-        assertEquals(2, types.size());
+        assertNotNull(types, "Список типов не должен быть null");
+        assertEquals(3, types.size(), "Должно быть 3 типа телефонных номеров");
     }
 
     @Test
     public void testUpdatePhoneNumberType() throws SQLException {
-        List<PhoneNumberType> types = phoneNumberTypeRepository.getAllPhoneNumberTypes();
-        PhoneNumberType type = types.stream()
-                .filter(t -> "Личный".equals(t.getName()))
-                .findFirst()
-                .orElse(null);
-
-        assertNotNull(type, "PhoneNumberType с именем 'Личный' должен существовать");
+        PhoneNumberType type = phoneNumberTypeRepository.getPhoneNumberType(1);
+        assertNotNull(type, "Тип телефонного номера с ID 1 должен существовать");
 
         type.setName("Обновленный тип");
         phoneNumberTypeRepository.updatePhoneNumberType(type);
 
-        PhoneNumberType updated = phoneNumberTypeRepository.getPhoneNumberType(type.getId());
-        assertEquals("Обновленный тип", updated.getName());
+        PhoneNumberType updated = phoneNumberTypeRepository.getPhoneNumberType(1);
+        assertEquals("Обновленный тип", updated.getName(), "Имя должно обновиться");
     }
 
     @Test
     public void testDeletePhoneNumberType() throws SQLException {
-        PhoneNumberType type = new PhoneNumberType(0, "Временный");
-        phoneNumberTypeRepository.addPhoneNumberType(type);
+        // Удаляем зависимые записи из phone_number
+        try (Connection connection = DatabaseUtil.getConnection();
+             Statement statement = connection.createStatement()) {
+            statement.execute("DELETE FROM phone_number WHERE type_id = 1;");
+        }
 
-        assertNotEquals(0, type.getId());
-        phoneNumberTypeRepository.deletePhoneNumberType(type.getId());
-
-        PhoneNumberType deleted = phoneNumberTypeRepository.getPhoneNumberType(type.getId());
-        assertNull(deleted);
+        phoneNumberTypeRepository.deletePhoneNumberType(1);
+        PhoneNumberType deleted = phoneNumberTypeRepository.getPhoneNumberType(1);
+        assertNull(deleted, "Тип телефонного номера с ID 1 должен быть удален");
     }
 
     @AfterEach
-    public void logState() throws SQLException {
-        logDatabaseState();
-    }
+    void tearDown() throws Exception {
+        try (Connection connection = DatabaseUtil.getConnection();
+             Statement statement = connection.createStatement()) {
 
-    @AfterAll
-    public void tearDown() throws SQLException {
-        phoneNumberTypeRepository.deleteAllPhoneNumberTypes();
-    }
-
-    private void logDatabaseState() throws SQLException {
-        List<PhoneNumberType> types = phoneNumberTypeRepository.getAllPhoneNumberTypes();
-        System.out.println("Current PhoneNumberTypes in Database:");
-        types.forEach(type -> System.out.println("ID: " + type.getId() + ", Name: " + type.getName()));
+            // Удаление всех записей
+            statement.execute("TRUNCATE TABLE phone_number RESTART IDENTITY CASCADE;");
+            statement.execute("TRUNCATE TABLE phone_number_type RESTART IDENTITY CASCADE;");
+        }
     }
 }

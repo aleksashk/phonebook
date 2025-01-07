@@ -25,11 +25,8 @@ public class Main {
         while (running) {
             System.out.println("\nВыберите действие:");
             System.out.println("1. Добавить контакт");
-            System.out.println("2. Обновить контакт");
-            System.out.println("3. Удалить контакт");
-            System.out.println("4. Показать все контакты");
-            System.out.println("5. Поиск контактов");
-            System.out.println("6. Выйти");
+            System.out.println("2. Показать все контакты");
+            System.out.println("3. Выйти");
 
             int choice;
             try {
@@ -41,11 +38,8 @@ public class Main {
 
             switch (choice) {
                 case 1 -> addContact(contactRepository, currentUser, scanner);
-                case 2 -> updateContact(contactRepository, currentUser, scanner);
-                case 3 -> deleteContact(contactRepository, currentUser, scanner);
-                case 4 -> listContacts(contactRepository, currentUser);
-                case 5 -> searchContacts(contactRepository, currentUser, scanner);
-                case 6 -> running = false;
+                case 2 -> listContacts(contactRepository, currentUser);
+                case 3 -> running = false;
                 default -> System.out.println("Неверный выбор. Попробуйте снова.");
             }
         }
@@ -112,70 +106,19 @@ public class Main {
         System.out.println("Введите имя:");
         String firstName = scanner.nextLine();
 
-        Contact contact = new Contact(0, lastName, firstName, user.getId());
+        Contact contact = new Contact(0, lastName, firstName, user.getEmail());
         contactRepository.addContact(contact);
         System.out.println("Контакт успешно добавлен!");
     }
 
-    private static void updateContact(ContactRepository contactRepository, User user, Scanner scanner) {
-        System.out.println("Введите ID контакта для обновления:");
-        int contactId = Integer.parseInt(scanner.nextLine());
-
-        Contact contact = contactRepository.getContactById(contactId);
-        if (contact == null || contact.getUserId() != user.getId()) {
-            System.out.println("Контакт не найден или недоступен.");
-            return;
-        }
-
-        System.out.println("Введите новую фамилию:");
-        String lastName = scanner.nextLine();
-        System.out.println("Введите новое имя:");
-        String firstName = scanner.nextLine();
-
-        contact.setLastName(lastName);
-        contact.setFirstName(firstName);
-        contactRepository.updateContact(contact);
-        System.out.println("Контакт успешно обновлен!");
-    }
-
-    private static void deleteContact(ContactRepository contactRepository, User user, Scanner scanner) {
-        System.out.println("Введите ID контакта для удаления:");
-        int contactId = Integer.parseInt(scanner.nextLine());
-
-        Contact contact = contactRepository.getContactById(contactId);
-        if (contact == null || contact.getUserId() != user.getId()) {
-            System.out.println("Контакт не найден или недоступен.");
-            return;
-        }
-
-        contactRepository.deleteContact(contactId);
-        System.out.println("Контакт успешно удален!");
-    }
-
     private static void listContacts(ContactRepository contactRepository, User user) {
-        List<Contact> contacts = contactRepository.getContactsByUserId(user.getId());
+        List<Contact> contacts = contactRepository.getContactsByUserEmail(user.getEmail());
         if (contacts.isEmpty()) {
             System.out.println("Нет контактов.");
             return;
         }
 
         System.out.println("Список контактов:");
-        for (Contact contact : contacts) {
-            System.out.println("ID: " + contact.getId() + ", Фамилия: " + contact.getLastName() + ", Имя: " + contact.getFirstName());
-        }
-    }
-
-    private static void searchContacts(ContactRepository contactRepository, User user, Scanner scanner) {
-        System.out.println("Введите запрос для поиска:");
-        String query = scanner.nextLine();
-
-        List<Contact> contacts = contactRepository.searchContacts(user.getId(), query);
-        if (contacts.isEmpty()) {
-            System.out.println("Нет результатов.");
-            return;
-        }
-
-        System.out.println("Результаты поиска:");
         for (Contact contact : contacts) {
             System.out.println("ID: " + contact.getId() + ", Фамилия: " + contact.getLastName() + ", Имя: " + contact.getFirstName());
         }

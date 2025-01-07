@@ -1,19 +1,35 @@
 package com.flamexandr.phonebook.repository;
 
 import com.flamexandr.phonebook.model.User;
-import org.apache.commons.codec.digest.DigestUtils;
+import com.flamexandr.phonebook.util.DatabaseUtil;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.sql.Connection;
+import java.sql.Statement;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserRepositoryTest {
 
+    private UserRepository userRepository;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        userRepository = new UserRepository();
+
+        try (Connection connection = DatabaseUtil.getConnection();
+             Statement statement = connection.createStatement()) {
+            // Очистка таблицы пользователей перед каждым тестом
+            statement.execute("TRUNCATE TABLE users RESTART IDENTITY CASCADE;");
+        }
+    }
+
     @Test
     void testSaveAndFindUser() {
-        UserRepository userRepository = new UserRepository();
         User user = new User("test@example.com", "password123");
-
         userRepository.save(user);
+
         User foundUser = userRepository.findByEmail("test@example.com");
 
         assertNotNull(foundUser);
@@ -23,9 +39,7 @@ class UserRepositoryTest {
 
     @Test
     void testExistsByEmail() {
-        UserRepository userRepository = new UserRepository();
         User user = new User("test@example.com", "password123");
-
         userRepository.save(user);
 
         assertTrue(userRepository.existsByEmail("test@example.com"));
@@ -34,12 +48,11 @@ class UserRepositoryTest {
 
     @Test
     void testCheckPassword() {
+        // Создаем пользователя
         User user = new User("test@example.com", "password123");
 
-        // Хэшируем пароль
-        user.setPassword(DigestUtils.md5Hex(user.getPassword()));
-
-        assertTrue(user.checkPassword("password123"));
-        assertFalse(user.checkPassword("wrongpassword"));
+        // Проверяем пароли
+        assertTrue(user.checkPassword("password123")); // Пароль совпадает
+        assertFalse(user.checkPassword("wrongpassword")); // Пароль не совпадает
     }
 }

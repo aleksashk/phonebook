@@ -9,175 +9,117 @@ import java.util.List;
 
 public class ContactRepository {
 
-    public List<Contact> getAllContacts() throws SQLException {
-        String query = "SELECT * FROM contact";
-        System.out.println("Executing query: " + query);
-
-        List<Contact> contacts = new ArrayList<>();
+    public void addContact(Contact contact) {
+        String sql = "INSERT INTO contact (last_name, first_name, user_email) VALUES (?, ?, ?)";
         try (Connection connection = DatabaseUtil.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(query)) {
+             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setString(1, contact.getLastName());
+            statement.setString(2, contact.getFirstName());
+            statement.setString(3, contact.getUserEmail());
+            statement.executeUpdate();
 
-            while (resultSet.next()) {
-                contacts.add(new Contact(
-                        resultSet.getInt("id"),
-                        resultSet.getString("last_name"),
-                        resultSet.getString("first_name"),
-                        resultSet.getInt("user_id")
-                ));
-            }
-        }
-        return contacts;
-    }
-
-    public List<Contact> getContactsByUserId(int userId) throws SQLException {
-        String query = "SELECT * FROM contact WHERE user_id = ?";
-        System.out.println("Executing query: " + query);
-
-        List<Contact> contacts = new ArrayList<>();
-        try (Connection connection = DatabaseUtil.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setInt(1, userId);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            while (resultSet.next()) {
-                contacts.add(new Contact(
-                        resultSet.getInt("id"),
-                        resultSet.getString("last_name"),
-                        resultSet.getString("first_name"),
-                        resultSet.getInt("user_id")
-                ));
-            }
-        }
-        return contacts;
-    }
-
-    public void addContact(Contact contact) throws SQLException {
-        String query = "INSERT INTO contact (last_name, first_name, user_id) VALUES (?, ?, ?)";
-        System.out.println("Executing query: " + query);
-
-        try (Connection connection = DatabaseUtil.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-
-            preparedStatement.setString(1, contact.getLastName());
-            preparedStatement.setString(2, contact.getFirstName());
-            preparedStatement.setInt(3, contact.getUserId());
-            preparedStatement.executeUpdate();
-
-            try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
+            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     contact.setId(generatedKeys.getInt(1));
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error adding contact", e);
         }
     }
 
-    public Contact getContactById(int id) throws SQLException {
-        String query = "SELECT * FROM contact WHERE id = ?";
-        System.out.println("Executing query: " + query);
+    public List<Contact> getContactsByUserEmail(String userEmail) {
+        String sql = "SELECT * FROM contact WHERE user_email = ?";
+        List<Contact> contacts = new ArrayList<>();
+        try (Connection connection = DatabaseUtil.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, userEmail);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    contacts.add(new Contact(
+                            resultSet.getInt("id"),
+                            resultSet.getString("last_name"),
+                            resultSet.getString("first_name"),
+                            resultSet.getString("user_email")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching contacts", e);
+        }
+        return contacts;
+    }
+
+    public List<Contact> searchContacts(String userEmail, String query) {
+        List<Contact> contacts = new ArrayList<>();
+        String sql = "SELECT * FROM contact WHERE user_email = ? AND (last_name ILIKE ? OR first_name ILIKE ?)";
 
         try (Connection connection = DatabaseUtil.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+             PreparedStatement statement = connection.prepareStatement(sql)) {
 
-            preparedStatement.setInt(1, id);
-            ResultSet resultSet = preparedStatement.executeQuery();
+            statement.setString(1, userEmail);
+            statement.setString(2, "%" + query + "%");
+            statement.setString(3, "%" + query + "%");
 
-            if (resultSet.next()) {
-                return new Contact(
-                        resultSet.getInt("id"),
-                        resultSet.getString("last_name"),
-                        resultSet.getString("first_name"),
-                        resultSet.getInt("user_id")
-                );
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    contacts.add(new Contact(
+                            resultSet.getInt("id"),
+                            resultSet.getString("last_name"),
+                            resultSet.getString("first_name"),
+                            resultSet.getString("user_email")
+                    ));
+                }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error while searching contacts", e);
+        }
+
+        return contacts;
+    }
+
+    public Contact getContactById(int id) {
+        String sql = "SELECT * FROM contact WHERE id = ?";
+        try (Connection connection = DatabaseUtil.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return new Contact(
+                            resultSet.getInt("id"),
+                            resultSet.getString("last_name"),
+                            resultSet.getString("first_name"),
+                            resultSet.getString("user_email")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching contact by ID", e);
         }
         return null;
     }
 
-    public boolean existsById(int id) throws SQLException {
-        String query = "SELECT 1 FROM contact WHERE id = ?";
-        System.out.println("Executing query: " + query);
-
+    public void updateContact(Contact contact) {
+        String sql = "UPDATE contact SET last_name = ?, first_name = ? WHERE id = ?";
         try (Connection connection = DatabaseUtil.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setInt(1, id);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            return resultSet.next();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, contact.getLastName());
+            statement.setString(2, contact.getFirstName());
+            statement.setInt(3, contact.getId());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error updating contact", e);
         }
     }
 
-    public List<Contact> getContactsByFirstName(String firstName) throws SQLException {
-        String query = "SELECT * FROM contact WHERE first_name = ?";
-        System.out.println("Executing query: " + query);
-
-        List<Contact> contacts = new ArrayList<>();
+    public void deleteContact(int id) {
+        String sql = "DELETE FROM contact WHERE id = ?";
         try (Connection connection = DatabaseUtil.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setString(1, firstName);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            while (resultSet.next()) {
-                contacts.add(new Contact(
-                        resultSet.getInt("id"),
-                        resultSet.getString("last_name"),
-                        resultSet.getString("first_name"),
-                        resultSet.getInt("user_id")
-                ));
-            }
-        }
-        return contacts;
-    }
-
-    public List<Contact> getContactsByLastName(String lastName) throws SQLException {
-        String query = "SELECT * FROM contact WHERE last_name = ?";
-        System.out.println("Executing query: " + query);
-
-        List<Contact> contacts = new ArrayList<>();
-        try (Connection connection = DatabaseUtil.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setString(1, lastName);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            while (resultSet.next()) {
-                contacts.add(new Contact(
-                        resultSet.getInt("id"),
-                        resultSet.getString("last_name"),
-                        resultSet.getString("first_name"),
-                        resultSet.getInt("user_id")
-                ));
-            }
-        }
-        return contacts;
-    }
-
-    public void updateContact(Contact contact) throws SQLException {
-        String query = "UPDATE contact SET last_name = ?, first_name = ? WHERE id = ?";
-        System.out.println("Executing query: " + query);
-
-        try (Connection connection = DatabaseUtil.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setString(1, contact.getLastName());
-            preparedStatement.setString(2, contact.getFirstName());
-            preparedStatement.setInt(3, contact.getId());
-            preparedStatement.executeUpdate();
-        }
-    }
-
-    public void deleteContact(int id) throws SQLException {
-        String query = "DELETE FROM contact WHERE id = ?";
-        System.out.println("Executing query: " + query);
-
-        try (Connection connection = DatabaseUtil.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setInt(1, id);
-            preparedStatement.executeUpdate();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error deleting contact", e);
         }
     }
 }

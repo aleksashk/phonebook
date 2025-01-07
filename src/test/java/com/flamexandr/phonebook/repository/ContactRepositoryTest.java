@@ -26,115 +26,62 @@ class ContactRepositoryTest {
             statement.execute("TRUNCATE TABLE contact_category, phone_number, contact, category, phone_number_type, users RESTART IDENTITY CASCADE");
 
             // Добавление тестового пользователя
-            statement.execute("INSERT INTO users (email, password) VALUES ('test_user@example.com', 'password')");
-
-            // Инициализация справочных данных
-            statement.execute("INSERT INTO phone_number_type (name) VALUES ('Личный'), ('Рабочий'), ('Домашний');");
+            statement.execute("INSERT INTO users (email, password) VALUES ('test_user@example.com', 'password123')");
         }
     }
 
     @Test
-    void testAddContact() throws Exception {
-        // Добавляем контакт
-        Contact contact = new Contact(0, "Петров", "Петр", 1); // userId = 1
+    void testAddContact() {
+        Contact contact = new Contact(0, "Иванов", "Иван", "test_user@example.com");
         contactRepository.addContact(contact);
 
-        // Проверяем количество записей и данные
-        List<Contact> contacts = contactRepository.getContactsByUserId(1);
+        List<Contact> contacts = contactRepository.getContactsByUserEmail("test_user@example.com");
         assertEquals(1, contacts.size());
-        assertEquals("Петров", contacts.get(0).getLastName());
-        assertEquals("Петр", contacts.get(0).getFirstName());
-    }
-
-    @Test
-    void testGetAllContacts() throws Exception {
-        // Добавляем два контакта
-        contactRepository.addContact(new Contact(0, "Иванов", "Иван", 1));
-        contactRepository.addContact(new Contact(0, "Петров", "Петр", 1));
-
-        // Проверяем их количество
-        List<Contact> contacts = contactRepository.getContactsByUserId(1);
-        assertEquals(2, contacts.size());
-    }
-
-    @Test
-    void testGetContactById() throws Exception {
-        // Добавляем новый контакт
-        Contact contact = new Contact(0, "Сидоров", "Семен", 1);
-        contactRepository.addContact(contact);
-
-        // Проверяем, что он существует и данные соответствуют
-        Contact retrievedContact = contactRepository.getContactById(contact.getId());
-        assertNotNull(retrievedContact, "Contact should not be null");
-        assertEquals("Сидоров", retrievedContact.getLastName());
-        assertEquals("Семен", retrievedContact.getFirstName());
-    }
-
-    @Test
-    void testGetContactById_NotFound() throws Exception {
-        Contact contact = contactRepository.getContactById(999);
-        assertNull(contact);
-    }
-
-    @Test
-    void testExistsById() throws Exception {
-        Contact contact = new Contact(0, "Иванов", "Иван", 1);
-        contactRepository.addContact(contact);
-        assertTrue(contactRepository.existsById(contact.getId()), "Contact should exist");
-    }
-
-    @Test
-    void testGetContactsByLastName() throws Exception {
-        contactRepository.addContact(new Contact(0, "Иванов", "Иван", 1));
-        contactRepository.addContact(new Contact(0, "Иванов", "Пётр", 1));
-
-        List<Contact> contacts = contactRepository.getContactsByLastName("Иванов");
-        assertEquals(2, contacts.size());
+        assertEquals("Иванов", contacts.get(0).getLastName());
         assertEquals("Иван", contacts.get(0).getFirstName());
-        assertEquals("Пётр", contacts.get(1).getFirstName());
     }
 
     @Test
-    void testGetContactsByLastName_NotFound() throws Exception {
-        List<Contact> contacts = contactRepository.getContactsByLastName("Неизвестный");
-        assertTrue(contacts.isEmpty());
+    void testGetContactsByUserEmail() {
+        contactRepository.addContact(new Contact(0, "Иванов", "Иван", "test_user@example.com"));
+        contactRepository.addContact(new Contact(0, "Петров", "Петр", "test_user@example.com"));
+
+        List<Contact> contacts = contactRepository.getContactsByUserEmail("test_user@example.com");
+        assertEquals(2, contacts.size());
     }
 
     @Test
-    void testUpdateContact() throws Exception {
-        Contact contact = new Contact(0, "Иванов", "Иван", 1);
+    void testSearchContacts() {
+        contactRepository.addContact(new Contact(0, "Иванов", "Иван", "test_user@example.com"));
+        contactRepository.addContact(new Contact(0, "Петров", "Петр", "test_user@example.com"));
+
+        // Убедитесь, что метод `searchContacts` принимает правильные параметры.
+        List<Contact> results = contactRepository.searchContacts("test_user@example.com", "Иван");
+        assertEquals(1, results.size());
+        assertEquals("Иванов", results.get(0).getLastName());
+    }
+
+    @Test
+    void testUpdateContact() {
+        Contact contact = new Contact(0, "Иванов", "Иван", "test_user@example.com");
         contactRepository.addContact(contact);
 
-        Contact updatedContact = new Contact(contact.getId(), "Смирнов", "Иван", 1);
-        contactRepository.updateContact(updatedContact);
+        contact.setLastName("Сидоров");
+        contact.setFirstName("Сергей");
+        contactRepository.updateContact(contact);
 
-        Contact retrievedContact = contactRepository.getContactById(contact.getId());
-        assertNotNull(retrievedContact, "Updated contact should not be null");
-        assertEquals("Смирнов", retrievedContact.getLastName());
+        Contact updatedContact = contactRepository.getContactsByUserEmail("test_user@example.com").get(0);
+        assertEquals("Сидоров", updatedContact.getLastName());
+        assertEquals("Сергей", updatedContact.getFirstName());
     }
 
     @Test
-    void testUpdateContact_NotFound() throws Exception {
-        Contact updatedContact = new Contact(999, "Неизвестный", "Имя", 1);
-        contactRepository.updateContact(updatedContact);
-
-        Contact contact = contactRepository.getContactById(999);
-        assertNull(contact);
-    }
-
-    @Test
-    void testDeleteContact() throws Exception {
-        Contact contact = new Contact(0, "Иванов", "Иван", 1);
+    void testDeleteContact() {
+        Contact contact = new Contact(0, "Иванов", "Иван", "test_user@example.com");
         contactRepository.addContact(contact);
-        assertTrue(contactRepository.existsById(contact.getId()), "Contact should exist before deletion");
 
+        assertFalse(contactRepository.getContactsByUserEmail("test_user@example.com").isEmpty());
         contactRepository.deleteContact(contact.getId());
-        assertFalse(contactRepository.existsById(contact.getId()), "Contact should not exist after deletion");
-    }
-
-    @Test
-    void testDeleteContact_NotFound() throws Exception {
-        contactRepository.deleteContact(999);
-        assertFalse(contactRepository.existsById(999));
+        assertTrue(contactRepository.getContactsByUserEmail("test_user@example.com").isEmpty());
     }
 }

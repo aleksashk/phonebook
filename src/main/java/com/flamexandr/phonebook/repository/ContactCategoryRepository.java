@@ -93,5 +93,4 @@ public class ContactCategoryRepository {
             preparedStatement.executeUpdate();
         }
     }
-
 }

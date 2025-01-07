@@ -1,29 +1,54 @@
 package com.flamexandr.phonebook.repository;
 
 import com.flamexandr.phonebook.model.User;
-import org.apache.commons.codec.digest.DigestUtils;
+import com.flamexandr.phonebook.util.DatabaseUtil;
 
 import java.sql.*;
-import java.util.HashMap;
-import java.util.Map;
 
 public class UserRepository {
-    private final Map<String, User> users = new HashMap<>();
-
-    public boolean existsByEmail(String email) {
-        return users.containsKey(email);
-    }
 
     public void save(User user) {
-        user.setPassword(hashPassword(user.getPassword())); // Хэшируем пароль перед сохранением
-        users.put(user.getEmail(), user);
+        String sql = "INSERT INTO users (email, password) VALUES (?, ?)";
+        try (Connection connection = DatabaseUtil.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, user.getEmail());
+            statement.setString(2, user.getPassword());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error saving user", e);
+        }
+    }
+
+    public boolean existsByEmail(String email) {
+        String sql = "SELECT COUNT(*) FROM users WHERE email = ?";
+        try (Connection connection = DatabaseUtil.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, email);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error checking user existence", e);
+        }
+        return false;
     }
 
     public User findByEmail(String email) {
-        return users.get(email);
-    }
-
-    private String hashPassword(String password) {
-        return DigestUtils.md5Hex(password);
+        String sql = "SELECT * FROM users WHERE email = ?";
+        try (Connection connection = DatabaseUtil.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, email);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                return new User(
+                        resultSet.getString("email"),
+                        resultSet.getString("password")
+                );
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error finding user", e);
+        }
+        return null;
     }
 }
