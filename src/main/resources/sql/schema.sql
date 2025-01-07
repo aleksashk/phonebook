@@ -27,19 +27,14 @@ CREATE TABLE IF NOT EXISTS phone_number (
 );
 
 CREATE TABLE contact_category (
+                                  id SERIAL PRIMARY KEY,
                                   contact_id INT NOT NULL REFERENCES contact(id) ON DELETE CASCADE,
-                                  category_id INT NOT NULL REFERENCES category(id),
-                                  PRIMARY KEY (contact_id, category_id)
+                                  category_id INT NOT NULL REFERENCES category(id)
 );
 
-
 INSERT INTO phone_number_type (name) VALUES ('Личный'), ('Рабочий'), ('Домашний');
-
 INSERT INTO contact (first_name, last_name) VALUES ('Павел', 'Титов'), ('Анастасия', 'Иванова');
-
 INSERT INTO category (name) VALUES ('Друзья'), ('Одноклассники'), ('Родственники');
-
 INSERT INTO phone_number (contact_id, phone_number, type_id)
 VALUES (1, '46237648234', 1), (2, '324234234234', 2);
-
 INSERT INTO contact_category (contact_id, category_id) VALUES (1, 1), (2, 2);
