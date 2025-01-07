@@ -22,15 +22,39 @@ public class ContactRepository {
                 contacts.add(new Contact(
                         resultSet.getInt("id"),
                         resultSet.getString("last_name"),
-                        resultSet.getString("first_name")
+                        resultSet.getString("first_name"),
+                        resultSet.getInt("user_id")
                 ));
             }
-            return contacts;
         }
+        return contacts;
+    }
+
+    public List<Contact> getContactsByUserId(int userId) throws SQLException {
+        String query = "SELECT * FROM contact WHERE user_id = ?";
+        System.out.println("Executing query: " + query);
+
+        List<Contact> contacts = new ArrayList<>();
+        try (Connection connection = DatabaseUtil.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, userId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                contacts.add(new Contact(
+                        resultSet.getInt("id"),
+                        resultSet.getString("last_name"),
+                        resultSet.getString("first_name"),
+                        resultSet.getInt("user_id")
+                ));
+            }
+        }
+        return contacts;
     }
 
     public void addContact(Contact contact) throws SQLException {
-        String query = "INSERT INTO contact (last_name, first_name) VALUES (?, ?)";
+        String query = "INSERT INTO contact (last_name, first_name, user_id) VALUES (?, ?, ?)";
         System.out.println("Executing query: " + query);
 
         try (Connection connection = DatabaseUtil.getConnection();
@@ -38,6 +62,7 @@ public class ContactRepository {
 
             preparedStatement.setString(1, contact.getLastName());
             preparedStatement.setString(2, contact.getFirstName());
+            preparedStatement.setInt(3, contact.getUserId());
             preparedStatement.executeUpdate();
 
             try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
@@ -62,7 +87,8 @@ public class ContactRepository {
                 return new Contact(
                         resultSet.getInt("id"),
                         resultSet.getString("last_name"),
-                        resultSet.getString("first_name")
+                        resultSet.getString("first_name"),
+                        resultSet.getInt("user_id")
                 );
             }
         }
@@ -98,7 +124,8 @@ public class ContactRepository {
                 contacts.add(new Contact(
                         resultSet.getInt("id"),
                         resultSet.getString("last_name"),
-                        resultSet.getString("first_name")
+                        resultSet.getString("first_name"),
+                        resultSet.getInt("user_id")
                 ));
             }
         }
@@ -120,7 +147,8 @@ public class ContactRepository {
                 contacts.add(new Contact(
                         resultSet.getInt("id"),
                         resultSet.getString("last_name"),
-                        resultSet.getString("first_name")
+                        resultSet.getString("first_name"),
+                        resultSet.getInt("user_id")
                 ));
             }
         }

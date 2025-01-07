@@ -5,11 +5,13 @@ public class Contact {
     private int id;
     private String lastName;
     private String firstName;
+    private int userId;
 
-    public Contact(int id, String lastName, String firstName) {
+    public Contact(int id, String lastName, String firstName, int userId) {
         this.id = id;
         this.lastName = lastName;
         this.firstName = firstName;
+        this.userId = userId;
     }
 
     public int getId() {
@@ -34,5 +36,13 @@ public class Contact {
 
     public void setFirstName(String firstName) {
         this.firstName = firstName;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 }
