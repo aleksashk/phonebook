@@ -5,6 +5,10 @@ public class PhoneNumberType {
     private int id;
     private String name;
 
+    public PhoneNumberType(String name) {
+        this.name = name;
+    }
+
     public PhoneNumberType(int id, String name) {
         this.id = id;
         this.name = name;
