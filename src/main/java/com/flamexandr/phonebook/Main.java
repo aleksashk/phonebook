@@ -1,9 +1,11 @@
 package com.flamexandr.phonebook;
 
+import com.flamexandr.phonebook.dao.ContactDao;
+import com.flamexandr.phonebook.dao.UserDao;
+import com.flamexandr.phonebook.dao.impl.ContactDaoImpl;
+import com.flamexandr.phonebook.dao.impl.UserDaoImpl;
 import com.flamexandr.phonebook.model.Contact;
 import com.flamexandr.phonebook.model.User;
-import com.flamexandr.phonebook.repository.ContactRepository;
-import com.flamexandr.phonebook.repository.UserRepository;
 import com.flamexandr.phonebook.util.SchemaInitializer;
 
 import java.util.List;
@@ -11,17 +13,21 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
+        // Инициализация схемы базы данных
         SchemaInitializer.executeSchema();
 
-        UserRepository userRepository = new UserRepository();
-        ContactRepository contactRepository = new ContactRepository();
+        // Использование DAO
+        UserDao userDao = new UserDaoImpl();
+        ContactDao contactDao = new ContactDaoImpl();
         Scanner scanner = new Scanner(System.in);
 
-        User currentUser = authenticateUser(userRepository, scanner);
+        // Аутентификация пользователя
+        User currentUser = authenticateUser(userDao, scanner);
 
         System.out.println("Добро пожаловать в телефонную книгу!");
         boolean running = true;
 
+        // Основное меню
         while (running) {
             System.out.println("\nВыберите действие:");
             System.out.println("1. Добавить контакт");
@@ -37,15 +43,15 @@ public class Main {
             }
 
             switch (choice) {
-                case 1 -> addContact(contactRepository, currentUser, scanner);
-                case 2 -> listContacts(contactRepository, currentUser);
+                case 1 -> addContact(contactDao, currentUser, scanner);
+                case 2 -> listContacts(contactDao, currentUser);
                 case 3 -> running = false;
                 default -> System.out.println("Неверный выбор. Попробуйте снова.");
             }
         }
     }
 
-    private static User authenticateUser(UserRepository userRepository, Scanner scanner) {
+    private static User authenticateUser(UserDao userDao, Scanner scanner) {
         User currentUser = null;
 
         while (currentUser == null) {
@@ -65,20 +71,20 @@ public class Main {
                 case 1 -> {
                     System.out.println("Введите email:");
                     String email = scanner.nextLine();
-                    if (userRepository.existsByEmail(email)) {
+                    if (userDao.existsByEmail(email)) {
                         System.out.println("Пользователь с таким email уже существует.");
                         break;
                     }
 
                     System.out.println("Введите пароль:");
                     String password = scanner.nextLine();
-                    userRepository.save(new User(email, password));
+                    userDao.insert(new User(email, password));
                     System.out.println("Регистрация успешна!");
                 }
                 case 2 -> {
                     System.out.println("Введите email:");
                     String email = scanner.nextLine();
-                    User user = userRepository.findByEmail(email);
+                    User user = userDao.findByEmail(email);
                     if (user == null) {
                         System.out.println("Пользователь не найден.");
                         break;
@@ -100,27 +106,31 @@ public class Main {
         return currentUser;
     }
 
-    private static void addContact(ContactRepository contactRepository, User user, Scanner scanner) {
+    private static void addContact(ContactDao contactDao, User user, Scanner scanner) {
         System.out.println("Введите фамилию:");
         String lastName = scanner.nextLine();
         System.out.println("Введите имя:");
         String firstName = scanner.nextLine();
 
         Contact contact = new Contact(0, lastName, firstName, user.getEmail());
-        contactRepository.addContact(contact);
+        contactDao.insert(contact);
         System.out.println("Контакт успешно добавлен!");
     }
 
-    private static void listContacts(ContactRepository contactRepository, User user) {
-        List<Contact> contacts = contactRepository.getContactsByUserEmail(user.getEmail());
-        if (contacts.isEmpty()) {
-            System.out.println("Нет контактов.");
-            return;
-        }
+    private static void listContacts(ContactDao contactDao, User user) {
+        try {
+            List<Contact> contacts = contactDao.findByUserEmail(user.getEmail());
+            if (contacts.isEmpty()) {
+                System.out.println("Нет контактов.");
+                return;
+            }
 
-        System.out.println("Список контактов:");
-        for (Contact contact : contacts) {
-            System.out.println("ID: " + contact.getId() + ", Фамилия: " + contact.getLastName() + ", Имя: " + contact.getFirstName());
+            System.out.println("Список контактов:");
+            for (Contact contact : contacts) {
+                System.out.println("ID: " + contact.getId() + ", Фамилия: " + contact.getLastName() + ", Имя: " + contact.getFirstName());
+            }
+        } catch (Exception e) {
+            System.out.println("Ошибка при загрузке контактов: " + e.getMessage());
         }
     }
 }
