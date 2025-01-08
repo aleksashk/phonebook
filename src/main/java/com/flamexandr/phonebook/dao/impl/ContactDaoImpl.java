@@ -97,4 +97,47 @@ public class ContactDaoImpl implements ContactDao {
             return rowsAffected > 0;
         }
     }
+
+    @Override
+    public int insert(Contact contact) throws SQLException {
+        String query = "INSERT INTO contact (last_name, first_name, user_email) VALUES (?, ?, ?)";
+        try (Connection connection = DatabaseUtil.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+
+            preparedStatement.setString(1, contact.getLastName());
+            preparedStatement.setString(2, contact.getFirstName());
+            preparedStatement.setString(3, contact.getUserEmail());
+            preparedStatement.executeUpdate();
+
+            try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    return generatedKeys.getInt(1);
+                }
+            }
+        }
+        return -1; // Если вставка не удалась
+    }
+
+    @Override
+    public List<Contact> findByUserEmail(String email) throws SQLException {
+        String query = "SELECT * FROM contact WHERE user_email = ?";
+        List<Contact> contacts = new ArrayList<>();
+
+        try (Connection connection = DatabaseUtil.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setString(1, email);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                contacts.add(new Contact(
+                        resultSet.getInt("id"),
+                        resultSet.getString("last_name"),
+                        resultSet.getString("first_name"),
+                        resultSet.getString("user_email")
+                ));
+            }
+        }
+        return contacts;
+    }
 }

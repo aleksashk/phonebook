@@ -8,6 +8,7 @@ import com.flamexandr.phonebook.model.Contact;
 import com.flamexandr.phonebook.model.User;
 import com.flamexandr.phonebook.util.SchemaInitializer;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Scanner;
 
@@ -106,7 +107,7 @@ public class Main {
         return currentUser;
     }
 
-    private static void addContact(ContactDao contactDao, User user, Scanner scanner) {
+    private static void addContact(ContactDao contactDao, User user, Scanner scanner) throws SQLException {
         System.out.println("Введите фамилию:");
         String lastName = scanner.nextLine();
         System.out.println("Введите имя:");

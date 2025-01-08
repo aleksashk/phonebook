@@ -15,4 +15,8 @@ public interface ContactDao {
     void updateContact(Contact contact) throws SQLException;
 
     boolean deleteContact(int id) throws SQLException;
+
+    int insert(Contact contact) throws SQLException;
+
+    List<Contact> findByUserEmail(String email) throws SQLException;
 }
