@@ -6,9 +6,16 @@ public class User {
     private String email;
     private String password;
 
+    // Конструктор для создания нового пользователя (хэширование пароля)
     public User(String email, String password) {
         this.email = email;
-        this.password = DigestUtils.md5Hex(password);
+        this.password = DigestUtils.md5Hex(password); // Хэширование пароля
+    }
+
+    // Конструктор для создания пользователя с уже хэшированным паролем
+    public User(String email, String password, boolean hashed) {
+        this.email = email;
+        this.password = hashed ? password : DigestUtils.md5Hex(password);
     }
 
     public String getEmail() {
